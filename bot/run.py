@@ -283,7 +283,10 @@ async def ollama_request_long(message: types.Message):
             if ACTIVE_CHATS.get(message.from_user.id) is None:
                 ACTIVE_CHATS[message.from_user.id] = {
                     "model": modelname,
-                    "messages": [{"role": "user", "content": prompt, "images": ([image_base64] if image_base64 else [])}],
+                    "messages": [{"role": "user", 
+                                  "content": prompt, 
+                                  "images": (
+                                      [image_base64] if image_base64 else [])}],
                     "stream": True,
                 }
             else:
