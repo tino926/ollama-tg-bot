@@ -294,12 +294,16 @@ async def ollama_request_long(message: types.Message):
             f"[Request]: Processing '{prompt}' for {message.from_user.first_name} {message.from_user.last_name}"
         )
         payload = ACTIVE_CHATS.get(message.from_user.id)
+
+        # Handles long responses from Ollama API by streaming and segmenting the 
+        #   response for efficient display.
         async for response_data in generate(payload, modelname, prompt):
             msg = response_data.get("message")
             if msg is None:
                 continue
             chunk = msg.get("content", "")
             full_response += chunk
+            # Strip any leading or trailing whitespace from the full response.
             full_response_stripped = full_response.strip()
 
             # avoid Bad Request: message text is empty
@@ -309,7 +313,8 @@ async def ollama_request_long(message: types.Message):
             if "." in chunk or "\n" in chunk or "!" in chunk or "?" in chunk:
                 if sent_message:
                     if last_sent_text != full_response_stripped:
-                        await bot.edit_message_text(chat_id=message.chat.id, message_id=sent_message.message_id,
+                        await bot.edit_message_text(chat_id=message.chat.id, 
+                                                    message_id=sent_message.message_id,
                                                     text=full_response_stripped)
                         last_sent_text = full_response_stripped
                 else:
@@ -326,7 +331,8 @@ async def ollama_request_long(message: types.Message):
                         and last_sent_text != full_response_stripped
                 ):
                     if sent_message:
-                        await bot.edit_message_text(chat_id=message.chat.id, message_id=sent_message.message_id,
+                        await bot.edit_message_text(chat_id=message.chat.id, 
+                                                    message_id=sent_message.message_id,
                                                     text=full_response_stripped)
                     else:
                         sent_message = await bot.send_message(chat_id=message.chat.id,
