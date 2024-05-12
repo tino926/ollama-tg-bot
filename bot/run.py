@@ -342,7 +342,8 @@ async def ollama_request_long(message: types.Message):
                     message_id=sent_message.message_id,
                     text=md_autofixer(
                         full_response_stripped
-                        + f"\n\nCurrent Model: `{modelname}`**\n**Generated in {response_data.get('total_duration') / 1e9:.2f}s"
+                        + f"\n\nCurrent Model: `{modelname}`**\n**Generated in "
+                        +"{response_data.get('total_duration') / 1e9:.2f}s"
                     ),
                     parse_mode=ParseMode.MARKDOWN_V2,
                 )
