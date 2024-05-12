@@ -261,6 +261,109 @@ async def ollama_request(message: types.Message):
         )
 
 
+# unfinished function for long response from ollama
+async def ollama_request_long(message: types.Message):
+    try:
+        await bot.send_chat_action(message.chat.id, "typing")
+        prompt = message.text or message.caption
+        image_base64 = ''
+        if message.content_type == 'photo':
+            image_buffer = io.BytesIO()
+            await bot.download(
+                message.photo[-1],
+                destination=image_buffer
+            )
+            image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
+        full_response = ""
+        sent_message = None
+        last_sent_text = None
+
+        async with ACTIVE_CHATS_LOCK:
+            # Add prompt to active chats object
+            if ACTIVE_CHATS.get(message.from_user.id) is None:
+                ACTIVE_CHATS[message.from_user.id] = {
+                    "model": modelname,
+                    "messages": [{"role": "user", "content": prompt, "images": ([image_base64] if image_base64 else [])}],
+                    "stream": True,
+                }
+            else:
+                ACTIVE_CHATS[message.from_user.id]["messages"].append(
+                    {"role": "user", "content": prompt, "images": ([image_base64] if image_base64 else [])}
+                )
+        logging.info(
+            f"[Request]: Processing '{prompt}' for {message.from_user.first_name} {message.from_user.last_name}"
+        )
+        payload = ACTIVE_CHATS.get(message.from_user.id)
+        async for response_data in generate(payload, modelname, prompt):
+            msg = response_data.get("message")
+            if msg is None:
+                continue
+            chunk = msg.get("content", "")
+            full_response += chunk
+            full_response_stripped = full_response.strip()
+
+            # avoid Bad Request: message text is empty
+            if full_response_stripped == "":
+                continue
+
+            if "." in chunk or "\n" in chunk or "!" in chunk or "?" in chunk:
+                if sent_message:
+                    if last_sent_text != full_response_stripped:
+                        await bot.edit_message_text(chat_id=message.chat.id, message_id=sent_message.message_id,
+                                                    text=full_response_stripped)
+                        last_sent_text = full_response_stripped
+                else:
+                    sent_message = await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=full_response_stripped,
+                        reply_to_message_id=message.message_id,
+                    )
+                    last_sent_text = full_response_stripped
+
+            if response_data.get("done"):
+                if (
+                        full_response_stripped
+                        and last_sent_text != full_response_stripped
+                ):
+                    if sent_message:
+                        await bot.edit_message_text(chat_id=message.chat.id, message_id=sent_message.message_id,
+                                                    text=full_response_stripped)
+                    else:
+                        sent_message = await bot.send_message(chat_id=message.chat.id,
+                                                                text=full_response_stripped)
+                await bot.edit_message_text(
+                    chat_id=message.chat.id,
+                    message_id=sent_message.message_id,
+                    text=md_autofixer(
+                        full_response_stripped
+                        + f"\n\nCurrent Model: `{modelname}`**\n**Generated in {response_data.get('total_duration') / 1e9:.2f}s"
+                    ),
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+
+                async with ACTIVE_CHATS_LOCK:
+                    if ACTIVE_CHATS.get(message.from_user.id) is not None:
+                        # Add response to active chats object
+                        ACTIVE_CHATS[message.from_user.id]["messages"].append(
+                            {"role": "assistant", "content": full_response_stripped}
+                        )
+                        logging.info(
+                            f"[Response]: '{full_response_stripped}' for {message.from_user.first_name} {message.from_user.last_name}"
+                        )
+                    else:
+                        await bot.send_message(
+                            chat_id=message.chat.id, text="Chat was reset"
+                        )
+
+                break
+    except Exception as e:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"""Error occurred\n```\n{traceback.format_exc()}\n```""",
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+
+
 async def main():
     await bot.set_my_commands(commands)
     await dp.start_polling(bot, skip_update=True)
