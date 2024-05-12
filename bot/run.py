@@ -313,9 +313,10 @@ async def ollama_request_long(message: types.Message):
             if "." in chunk or "\n" in chunk or "!" in chunk or "?" in chunk:
                 if sent_message:
                     if last_sent_text != full_response_stripped:
-                        await bot.edit_message_text(chat_id=message.chat.id, 
-                                                    message_id=sent_message.message_id,
-                                                    text=full_response_stripped)
+                        await bot.edit_message_text(
+                            chat_id=message.chat.id, 
+                            message_id=sent_message.message_id,
+                            text=full_response_stripped)
                         last_sent_text = full_response_stripped
                 else:
                     sent_message = await bot.send_message(
@@ -331,12 +332,13 @@ async def ollama_request_long(message: types.Message):
                         and last_sent_text != full_response_stripped
                 ):
                     if sent_message:
-                        await bot.edit_message_text(chat_id=message.chat.id, 
-                                                    message_id=sent_message.message_id,
-                                                    text=full_response_stripped)
+                        await bot.edit_message_text(
+                            chat_id=message.chat.id, 
+                            message_id=sent_message.message_id,
+                            text=full_response_stripped)
                     else:
-                        sent_message = await bot.send_message(chat_id=message.chat.id,
-                                                                text=full_response_stripped)
+                        sent_message = await bot.send_message(
+                            chat_id=message.chat.id,text=full_response_stripped)
                 await bot.edit_message_text(
                     chat_id=message.chat.id,
                     message_id=sent_message.message_id,
@@ -355,7 +357,8 @@ async def ollama_request_long(message: types.Message):
                             {"role": "assistant", "content": full_response_stripped}
                         )
                         logging.info(
-                            f"[Response]: '{full_response_stripped}' for {message.from_user.first_name} {message.from_user.last_name}"
+                            f"[Response]: '{full_response_stripped}' for "
+                            + f"{message.from_user.first_name} {message.from_user.last_name}"
                         )
                     else:
                         await bot.send_message(
