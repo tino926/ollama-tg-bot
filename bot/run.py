@@ -266,29 +266,43 @@ async def ollama_request_long(message: types.Message):
         #     image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
         # full_response = ""
 
-        
-        sent_message = None
-        last_sent_text = None
-
-        async with ACTIVE_CHATS_LOCK:
-            # Add prompt to active chats object
-            if ACTIVE_CHATS.get(message.from_user.id) is None:
-                ACTIVE_CHATS[message.from_user.id] = {
-                    "model": modelname,
-                    "messages": [{"role": "user", 
-                                  "content": prompt, 
-                                  "images": (
-                                      [image_base64] if image_base64 else [])}],
-                    "stream": True,
-                }
-            else:
-                ACTIVE_CHATS[message.from_user.id]["messages"].append(
-                    {"role": "user", "content": prompt, "images": ([image_base64] if image_base64 else [])}
-                )
+        await add_prompt_to_active_chats(message, prompt, image_base64, 
+                                         modelname)
         logging.info(
-            f"[Request]: Processing '{prompt}' for {message.from_user.first_name} {message.from_user.last_name}"
+            f"[OllamaAPI]: Processing '{prompt}' for " + 
+            f"{message.from_user.first_name} {message.from_user.last_name}"
         )
+
+        # sent_message = None
+        # last_sent_text = None
+
+        # async with ACTIVE_CHATS_LOCK:
+        #     # Add prompt to active chats object
+        #     if ACTIVE_CHATS.get(message.from_user.id) is None:
+        #         ACTIVE_CHATS[message.from_user.id] = {
+        #             "model": modelname,
+        #             "messages": [{"role": "user", 
+        #                           "content": prompt, 
+        #                           "images": (
+        #                               [image_base64] if image_base64 else [])}],
+        #             "stream": True,
+        #         }
+        #     else:
+        #         ACTIVE_CHATS[message.from_user.id]["messages"].append(
+        #             {"role": "user", "content": prompt, "images": ([image_base64] if image_base64 else [])}
+        #         )
+        # logging.info(
+        #     f"[Request]: Processing '{prompt}' for {message.from_user.first_name} {message.from_user.last_name}"
+        # )
+
         payload = ACTIVE_CHATS.get(message.from_user.id)
+
+
+
+
+
+
+
 
         # Handles long responses from Ollama API by streaming and segmenting the 
         #   response for efficient display.
