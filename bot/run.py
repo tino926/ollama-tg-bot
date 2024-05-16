@@ -249,17 +249,24 @@ async def ollama_request(message: types.Message, prompt: str = None):
 # unfinished function for long response from ollama
 async def ollama_request_long(message: types.Message):
     try:
-        await bot.send_chat_action(message.chat.id, "typing")
-        prompt = message.text or message.caption
-        image_base64 = ''
-        if message.content_type == 'photo':
-            image_buffer = io.BytesIO()
-            await bot.download(
-                message.photo[-1],
-                destination=image_buffer
-            )
-            image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
         full_response = ""
+        await bot.send_chat_action(message.chat.id, "typing")
+        image_base64 = await process_image(message)
+        if prompt is None:
+            prompt = message.text or message.caption
+
+        # prompt = message.text or message.caption
+        # image_base64 = ''
+        # if message.content_type == 'photo':
+        #     image_buffer = io.BytesIO()
+        #     await bot.download(
+        #         message.photo[-1],
+        #         destination=image_buffer
+        #     )
+        #     image_base64 = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
+        # full_response = ""
+
+        
         sent_message = None
         last_sent_text = None
 
