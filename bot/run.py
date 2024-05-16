@@ -297,13 +297,6 @@ async def ollama_request_long(message: types.Message):
 
         payload = ACTIVE_CHATS.get(message.from_user.id)
 
-
-
-
-
-
-
-
         # Handles long responses from Ollama API by streaming and segmenting the 
         #   response for efficient display.
         async for response_data in generate(payload, modelname, prompt):
@@ -312,6 +305,14 @@ async def ollama_request_long(message: types.Message):
                 continue
             chunk = msg.get("content", "")
             full_response += chunk
+
+
+
+
+
+
+
+            
             # Strip any leading or trailing whitespace from the full response.
             full_response_stripped = full_response.strip()
 
