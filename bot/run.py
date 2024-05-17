@@ -306,6 +306,10 @@ async def ollama_request_long(message: types.Message):
             chunk = msg.get("content", "")
             full_response += chunk
 
+            if any([c in chunk for c in ".\n!?"]) or response_data.get("done"):
+                if await handle_response(message, response_data, full_response):
+                    break
+
 
 
     except Exception as e:
