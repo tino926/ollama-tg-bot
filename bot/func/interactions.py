@@ -107,3 +107,20 @@ class contextLock:
 
     async def __aexit__(self, exc_type, exc_value, exc_traceback):
         self.lock.release()
+
+
+
+
+
+
+async def save_history():
+    with open("chat_history.json", "w") as file:
+        json.dump(ACTIVE_CHATS, file)
+
+async def load_history():
+    global ACTIVE_CHATS
+    try:
+        with open("chat_history.json", "r") as file:
+            ACTIVE_CHATS = json.load(file)
+    except FileNotFoundError:
+        ACTIVE_CHATS = {}
