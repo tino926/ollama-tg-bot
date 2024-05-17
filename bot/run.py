@@ -306,17 +306,16 @@ async def ollama_request_long(message: types.Message):
             chunk = msg.get("content", "")
             full_response += chunk
 
-            if any([c in chunk for c in ".\n!?"]) or response_data.get("done"):
+            if any([c in chunk for c in ".\n!?;"]) or response_data.get("done"):
                 if await handle_response(message, response_data, full_response):
                     break
 
-
-
     except Exception as e:
+        print(f"-----\n[OllamaAPI-ERR] CAUGHT FAULT!\n{traceback.format_exc()}\n-----")
         await bot.send_message(
             chat_id=message.chat.id,
-            text=f"""Error occurred\n```\n{traceback.format_exc()}\n```""",
-            parse_mode=ParseMode.MARKDOWN_V2,
+            text=f"Something went wrong.",
+            parse_mode=ParseMode.HTML,
         )
 
 
