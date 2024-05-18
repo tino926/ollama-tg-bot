@@ -112,7 +112,7 @@ class contextLock:
 
 
 
-
+# to save and load history
 async def save_history():
     with open("chat_history.json", "w") as file:
         json.dump(ACTIVE_CHATS, file)
@@ -124,3 +124,24 @@ async def load_history():
             ACTIVE_CHATS = json.load(file)
     except FileNotFoundError:
         ACTIVE_CHATS = {}
+
+
+
+# to chat in a temporary session 
+#  e.g translate a text, but don't want it affect the current conversation
+async def add_prompt_to_active_chats(message, prompt, image_base64, modelname):
+    async with ACTIVE_CHATS_LOCK:
+        if ACTIVE_CHATS.get(message.from_user.id) is None:
+            ACTIVE_CHATS[message.from_user.id] = {
+                "model": modelname,
+                "messages": [],
+                "session_active": False,  # New field for session status
+                "session_count": 0,      # New field for message count
+                "stream": True,
+            }
+        else:
+            ACTIVE_CHATS[message.from_user.id]["messages"].append({
+                "role": "user",
+                "content": prompt,
+                "images": ([image_base64] if image_base64 else []),
+            })
