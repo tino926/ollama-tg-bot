@@ -204,7 +204,8 @@ async def handle_response(message, response_data, full_response):
     return False
 
 async def send_response(message, text):
-    if message.chat.id == message.from_user.id:
+    # A negative message.chat.id is a group message
+    if message.chat.id < 0 or message.chat.id == message.from_user.id:
         await bot.send_message(chat_id=message.chat.id, text=text)
     else:
         await bot.edit_message_text(
@@ -215,6 +216,13 @@ async def send_response(message, text):
 
 async def ollama_request(message: types.Message, prompt: str = None):
     try:
+        tmptext = prompt
+        if tmptext is None:
+            tmptext = message.text or message.caption
+        # if tmptext start with "#note:", exit
+        if tmptext.startswith("#note:"):
+            return
+
         full_response = ""
         await bot.send_chat_action(message.chat.id, "typing")
         image_base64 = await process_image(message)
