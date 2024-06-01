@@ -26,6 +26,7 @@ commands = [
     types.BotCommand(command="start", description="Start"),
     types.BotCommand(command="reset", description="Reset Chat"),
     types.BotCommand(command="history", description="Look through messages"),
+    types.BotCommand(command="devcmd", description="only for development"),
 ]
 ACTIVE_CHATS = {}
 ACTIVE_CHATS_LOCK = contextLock()
@@ -252,6 +253,28 @@ async def ollama_request(message: types.Message, prompt: str = None):
             text=f"Something went wrong.",
             parse_mode=ParseMode.HTML,
         )
+
+
+
+@dp.message(Command("devcmd"))
+async def command_devcmd_handler(message: Message) -> None:
+    if message.from_user.id in allowed_ids:
+        if message.from_user.id in ACTIVE_CHATS:
+            messages = ACTIVE_CHATS.get(message.chat.id)["messages"]
+            context = ""
+            for msg in messages:
+                context += f"*{msg['role'].capitalize()}*: {msg['content']}\n"
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=context,
+                parse_mode=ParseMode.MARKDOWN,
+            )
+        else:
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="No chat history available for this user",
+            )
+
 
 
 # unfinished function for long response from ollama
