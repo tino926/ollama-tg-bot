@@ -258,7 +258,7 @@ async def ollama_request(message: types.Message, prompt: str = None):
 
 @dp.message(Command("devcmd"))
 async def command_devcmd_handler(message: Message) -> None:
-    if message.from_user.id in allowed_ids:
+    if message.from_user.id in admin_ids:
         if message.from_user.id in ACTIVE_CHATS:
             messages = ACTIVE_CHATS.get(message.chat.id)["messages"]
             context = ""
@@ -272,7 +272,7 @@ async def command_devcmd_handler(message: Message) -> None:
         else:
             await bot.send_message(
                 chat_id=message.chat.id,
-                text="No chat history available for this user",
+                text="only admin user can do this",
             )
 
 
